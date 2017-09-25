@@ -15,7 +15,7 @@
 """
 from __future__ import unicode_literals
 
-from pyasn1.type import univ, tag
+from pyasn1.type import tag
 
 from tuf.encoding.metadata_asn1_definitions import *
 from tuf.encoding import hex_from_octetstring
@@ -76,11 +76,7 @@ def get_asn_signed(pydict_signed):
         hashval = pydict_fileinfo['hashes'][hashtype]
         hash = Hash()
         hash['function'] = int(HashFunction(hashtype))
-        hash['digest'] = BinaryData().subtype(explicitTag=tag.Tag(
-            tag.tagClassContext, tag.tagFormatConstructed, 1))
-        hash['digest']['octetString'] = univ.OctetString(
-            hexValue=hashval).subtype(implicitTag=tag.Tag(
-            tag.tagClassContext, tag.tagFormatSimple, 1))
+        hash['digest'] = OctetString(hexValue=hashval)
         hashes[number_of_hashes] = hash
         number_of_hashes += 1
 
@@ -226,7 +222,7 @@ def get_json_signed(asn_metadata):
     #     return asn_enum_value.namedValues[asn_enum_value][0]
     #
     hashtype = asn_hash_info['function'].namedValues[asn_hash_info['function']][0]
-    hashval = hex_from_octetstring(asn_hash_info['digest']['octetString'])
+    hashval = hex_from_octetstring(asn_hash_info['digest'])
 
     hashes[hashtype] = hashval
 

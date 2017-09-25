@@ -15,7 +15,7 @@
 """
 from __future__ import unicode_literals
 
-from pyasn1.type import univ, tag
+from pyasn1.type import tag
 
 from tuf.encoding.metadata_asn1_definitions import *
 from tuf.encoding import hex_from_octetstring
@@ -48,13 +48,7 @@ def get_asn_signed(json_signed):
   # TODO: Remove hardcoded hash assumptions here: type and number.
   # Model on code added to snapshotmetadata.py
   hash['function'] = int(HashFunction('sha256'))
-  digest = BinaryData().subtype(explicitTag=tag.Tag(tag.tagClassContext,
-                                                    tag.tagFormatConstructed,
-                                                    1))
-  octetString = univ.OctetString(hexValue=meta['hashes']['sha256'])\
-                .subtype(implicitTag=tag.Tag(tag.tagClassContext,
-                                             tag.tagFormatSimple, 1))
-  digest['octetString'] = octetString
+  digest = OctetString(hexValue=meta['hashes']['sha256'])
   hash['digest'] = digest
   hashes[0] = hash
   timestampMetadata['hashes'] = hashes
@@ -88,7 +82,7 @@ def get_json_signed(asn_metadata):
   timestampMetadata = asn_signed['body']['timestampMetadata']
   filename = str(timestampMetadata['filename'])
   # TODO: Remove hardcoded hash assumptions here.
-  sha256 = hex_from_octetstring(timestampMetadata['hashes'][0]['digest']['octetString'])
+  sha256 = hex_from_octetstring(timestampMetadata['hashes'][0]['digest'])
   json_signed['meta'] = {
     filename : {
       'hashes': {
