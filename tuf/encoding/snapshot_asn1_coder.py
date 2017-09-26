@@ -221,7 +221,7 @@ def get_json_signed(asn_metadata):
     #   def translate_pyasn_enum_to_value(asn_enum_value):
     #     return asn_enum_value.namedValues[asn_enum_value][0]
     #
-    hashtype = asn_hash_info['function'].namedValues[asn_hash_info['function']][0]
+    hashtype = asn_hash_info['function'].namedValues[asn_hash_info['function']]
     hashval = hex_from_octetstring(asn_hash_info['digest'])
 
     hashes[hashtype] = hashval
