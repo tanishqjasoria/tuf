@@ -312,6 +312,12 @@ class Updater(object):
     repository name. If not provided a repository name, runs refresh() on every
     SingleRepoUpdater (the updaters for every known repository).
 
+    Note that "unsafely update root" is misleading. It refers to updating
+    the root metadata even if we don't have updated timestamp/snapshot metadata
+    that vouches for it, but we don't really need this vouching, which we're
+    removing anyway. We don't need to care what the snapshot file says about
+    root.
+
     TODO: Docstring this without reproducing the entire string from below. /:
     """
     if repo_name is not None:
@@ -1315,6 +1321,13 @@ class SingleRepoUpdater(object):
       after first attempting to update the root metadata file. Only after this
       check will the exceptions listed here potentially be raised.
 
+      Note that "unsafely update root" is misleading. It refers to updating the
+      root metadata even if we don't have updated timestamp/snapshot metadata
+      that vouches for it, but we don't really need this vouching, which we're
+      removing anyway. We don't need to care what the snapshot file says about
+      root.
+
+
     <Arguments>
       unsafely_update_root_if_necessary:
         Boolean that indicates whether to unsafely update the Root metadata if
@@ -1419,8 +1432,9 @@ class SingleRepoUpdater(object):
     #
     except tuf.NoWorkingMirrorError:
       if unsafely_update_root_if_necessary:
-        logger.info('Valid top-level metadata cannot be downloaded.  Unsafely'
-          ' update the Root metadata.')
+        logger.info('Valid top-level metadata cannot be downloaded. Trying to '
+          'update Root metadata in case keys have changed for other metadata '
+          'roles.')
         self._update_metadata('root', DEFAULT_ROOT_UPPERLENGTH)
         self.refresh(unsafely_update_root_if_necessary=False)
 
