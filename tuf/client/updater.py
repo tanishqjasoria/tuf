@@ -1400,6 +1400,18 @@ class SingleRepoUpdater(object):
         logger.info('An expired Root metadata was loaded and must be updated.')
         raise
 
+    # Ensure that the role and key information of the top-level roles is the
+    # latest.  We do this whether or not Root needed to be updated, in order to
+    # ensure that, e.g., the entries in roledb for top-level roles are
+    # populated with expected keyid info so that roles can be validated.  In
+    # certain circumstances, top-level metadata might be missing because it was
+    # marked obsolete and deleted after a failed attempt, and thus we should
+    # refresh them here as a protective measure.  See Issue #736.
+    self._rebuild_key_and_role_db()
+    self.consistent_snapshot = \
+        self.metadata['current']['root']['consistent_snapshot']
+
+
     # If an exception is raised during the metadata update attempts, we will
     # attempt to update root metadata once by recursing with a special argument
     # (unsafely_update_root_if_necessary) to avoid further recursion.
@@ -2118,12 +2130,6 @@ class SingleRepoUpdater(object):
     self.metadata['previous'][metadata_role] = current_metadata_object
     self.metadata['current'][metadata_role] = updated_metadata_object
     self._update_versioninfo(uncompressed_metadata_filename)
-
-    # Ensure the role and key information of the top-level roles is also updated
-    # according to the newly-installed Root metadata.
-    if metadata_role == 'root':
-      self._rebuild_key_and_role_db()
-      self.consistent_snapshot = updated_metadata_object['consistent_snapshot']
 
 
 
