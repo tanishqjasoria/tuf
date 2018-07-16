@@ -9,6 +9,12 @@ import os # getcwd()
 
 tuf.conf.METADATA_FORMAT = 'json'
 
+import tuf.encoding.root_asn1_coder as root_asn1_coder
+import tuf.encoding.snapshot_asn1_coder as snapshot_asn1_coder
+import tuf.encoding.timestamp_asn1_coder as timestamp_asn1_coder
+import tuf.encoding.targets_asn1_coder as targets_asn1_coder
+import tuf.encoding.metadata_asn1_definitions as metadata_asn1_spec
+
 class TestASN1Conversion(unittest.TestCase):
 
   @classmethod
@@ -126,6 +132,77 @@ class TestASN1Conversion(unittest.TestCase):
     # No delegations for the Director, so no second case to test.
 
 
+
+
+
+
+
+
+
+
+
+
+def asn1_pydict_conversion_tester(json_fname, cls):
+  """
+  Given the filename of a JSON metadata role file, read it in and convert it
+  into a pyasn1-based Python dictionary representations of the same data,
+  then back into JSON-compatible Python dict, ensuring that the original and
+  the converted-and-converted-back dictionary are equivalent.
+
+  This test does not convert test encoding into DER.
+
+  This test also does not test signature conversion! (Signatures are signed
+  over DER encoding and this test does not encode to DER. Since the conversion
+  is tested to make sure that when converted back, the data is the same,
+  signatures are also not affected in that regard.)
+
+  Note:
+  This function takes as a second parameter the unittest.TestCase object whose
+  functions (assertTrue etc) it can use. This is awkward and inappropriate. :P
+  Find a different means of providing modularity instead of this one.
+  (Can't just have this method in the class above because it would be run as
+  a test. Could have default parameters and do that, but that's clunky, too.)
+  """
+
+  # 1. Load the given file (assume JSON) and extract the signed portion.
+  json_signed_only_pydict = tuf.util.load_file(json_fname)['signed']
+
+
+  # 2. Guess type of metadata role file.
+
+  # Assume filename is '.../<role>.json' or '.../..._<role>.json'.
+  # Isolate <role>.
+  shorter_fname = json_fname[:-5] # Strip .json
+  if '/' in shorter_fname:
+    shorter_fname = shorter_fname[shorter_fname.rfind('/') + 1:]
+
+  if '_' not in shorter_fname:
+    role_type = shorter_fname
+
+  else:
+    role_type = shorter_fname[shorter_fname.rfind('_') + 1:]
+
+  if role_type not in ['root', 'snapshot', 'timestamp', 'targets']:
+    if 'root' in shorter_fname:
+      role_type = 'root'
+    elif 'snapshot' in shorter_fname:
+      role_type = 'snapshot'
+    elif 'timestamp' in shorter_fname:
+      role_type = 'timestamp'
+    elif 'targets' in shorter_fname:
+      role_type = 'targets'
+    else:
+      # Assume this is a delegated targets role.
+      role_type = 'targets'
+
+  # 3. Choose the appropriate module given the role type and convert the
+  #    JSON-compatible pydict into a pyasn1-compatible pydict and back.
+  module = asn1_codec.SUPPORTED_ASN1_METADATA_MODULES[role_type]
+
+  asn1_signed_only_pydict = module.get_asn_signed(json_signed_only_pydict)
+  json_again = module.get_json_signed({'signatures': [], 'signed': asn1_signed_only_pydict})
+
+  cls.assertTrue(json_signed_only_pydict == json_again)
 
 
 
