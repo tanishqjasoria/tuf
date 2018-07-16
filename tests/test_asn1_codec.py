@@ -15,6 +15,9 @@ import tuf.encoding.timestamp_asn1_coder as timestamp_asn1_coder
 import tuf.encoding.targets_asn1_coder as targets_asn1_coder
 import tuf.encoding.metadata_asn1_definitions as metadata_asn1_spec
 
+import tuf.keys
+import hashlib
+
 class TestASN1Conversion(unittest.TestCase):
 
   @classmethod
@@ -209,8 +212,14 @@ def asn1_pydict_conversion_tester(json_fname, cls):
 
 
 
-def partial_der_conversion_tester(json_fname, cls): # Clunky.
+def der_conversion_tester(json_fname, cls):
   """
+  Given the filename of a JSON metadata role file, read it in and try performing
+  various conversions into DER-encoded ASN.1 and back. Test to make sure that
+  data is equivalent, and that new signatures (if re-signing is employed) are
+  valid.
+
+  Note:
   This function takes as a second parameter the unittest.TestCase object whose
   functions (assertTrue etc) it can use. This is awkward and inappropriate. :P
   Find a different means of providing modularity instead of this one.
@@ -227,28 +236,58 @@ def partial_der_conversion_tester(json_fname, cls): # Clunky.
   # Test type 1: only-signed
   # Convert and return only the 'signed' portion, the metadata payload itself,
   # without including any signatures.
-  role_signable_der = asn1_codec.convert_signed_metadata_to_der(
+  role_signed_only_der = asn1_codec.convert_signed_metadata_to_der(
       role_signable_pydict, only_signed=True)
-  cls.assertTrue(is_valid_nonempty_der(role_signable_der))
+  cls.assertTrue(is_valid_nonempty_der(role_signed_only_der))
   # TODO: Convert this 'signed'-only DER back to JSON and compare the 'signed'
-  # portion to the original 'signed' portion.
+  # portion to the original 'signed' portion. (Do I need a new func for this?
+  # The conversion from DER assumes it's in a struct matching the signable role
+  # format....)
+
+  # Now, for the purpose of testing the re-signing function below, take the hash
+  # of the DER encoding of the 'signed' portion of the role metadata.
+  der_signed_hash = hashlib.sha256(role_signed_only_der).digest()
 
 
   # Test type 2: full conversion
   # Convert the full signable ('signed' and 'signatures'), maintaining the
   # existing signature in a new format and encoding.
-  cls.assertTrue(is_valid_nonempty_der(
-      asn1_codec.convert_signed_metadata_to_der(
-      role_signable_pydict)))
+  role_signable_der = asn1_codec.convert_signed_metadata_to_der(
+      role_signable_pydict)
+
+  cls.assertTrue(is_valid_nonempty_der(role_signable_der))
+
+  pydict_again = asn1_codec.convert_signed_der_to_dersigned_json(
+      role_signable_der)
+
+  cls.assertEqual(role_signable_pydict, pydict_again)
+
 
   # Test type 3: full conversion with re-signing
   # Convert the full signable ('signed' and 'signatures'), but discarding the
   # original signatures and re-signing over, instead, the hash of the converted,
   # ASN.1/DER 'signed' element.
-  cls.assertTrue(is_valid_nonempty_der(
-      asn1_codec.convert_signed_metadata_to_der(
+  role_signable_der = asn1_codec.convert_signed_metadata_to_der(
       role_signable_pydict, resign=True,
-      private_key=cls.test_signing_key)))
+      private_key=cls.test_signing_key)
+
+  cls.assertTrue(is_valid_nonempty_der(role_signable_der))
+
+  pydict_again = asn1_codec.convert_signed_der_to_dersigned_json(
+      role_signable_der)
+
+  # The signature has changed, but the 'signed' elements should not have, so
+  # compare those (for the original vs converted-and-converted-back check).
+  cls.assertEqual(role_signable_pydict['signed'], pydict_again['signed'])
+
+  # The 'signatures' portion of the converted-back JSON-compatible pydict
+  # should now contain a correct signature over a hash of the DER encoding of
+  # the 'signed' portion of the metadata (which we also calculated earlier in
+  # this test function). Check the signature.
+  cls.assertTrue(tuf.keys.verify_signature(
+      cls.test_signing_key,
+      pydict_again['signatures'][0],
+      der_signed_hash))
 
 
 
