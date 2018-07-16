@@ -30,46 +30,298 @@ class TestASN1Conversion(unittest.TestCase):
         private_key_fname, 'password')
 
 
+
   # THIS NEXT TEST fails because the TUF root.json test file in question here
   # uses an RSA key, which the ASN1 conversion does not yet support.
-  # TODO: <~> FIX.
+  # TODO: FIX.
   # Our ASN1 conversion doesn't seem to support RSA keys. In particular, it is
   # being assumed that the key values are hex strings ('f9ac1325...') but an
   # RSA public key value is e.g. '-----BEGIN PUBLIC
   # KEY------\nMIIBojANBgk...\n...'
   @unittest.expectedFailure
-  def test_1_root_partial_convert(self):
-    # Test 1: only_signed conversion PyDict -> ASN1 BER of Root
-    partial_der_conversion_tester(
+  def test_1asn_convert_root(self):
+    """
+    Test ASN.1-only conversion for a Root role from the old TUF sample data.
+    """
+    asn1_pydict_conversion_tester(
         'repository_data/repository/metadata/root.json', self)
 
 
 
-  def test_2_tuf_sample_timestamp_partial_convert(self):
-    """Test 2: only_signed conversion PyDict -> ASN1 BER of Timestamp"""
-    partial_der_conversion_tester(
+  # THIS NEXT TEST fails because the TUF root.json test file in question here
+  # uses an RSA key, which the ASN1 conversion does not yet support.
+  # TODO: FIX.
+  # Our ASN1 conversion doesn't seem to support RSA keys. In particular, it is
+  # being assumed that the key values are hex strings ('f9ac1325...') but an
+  # RSA public key value is e.g. '-----BEGIN PUBLIC
+  # KEY------\nMIIBojANBgk...\n...'
+  @unittest.expectedFailure
+  def test_1der_convert_root_tuf(self):
+    """
+    Test ASN.1 conversions with DER encoding for a Root role from the old TUF
+    sample data.
+    """
+    der_conversion_tester(
+        'repository_data/repository/metadata/root.json', self)
+
+
+
+  def test_2asn_convert_root_uptane(self):
+    """
+    Test ASN.1-only conversion for Root roles from the Uptane samples.
+    """
+    asn1_pydict_conversion_tester(
+        'repository_data/uptane_mainrepo_root.json', self)
+
+    asn1_pydict_conversion_tester(
+        'repository_data/uptane_director_root.json', self)
+
+
+  def test_2der_convert_root_uptane(self):
+    """
+    Test ASN.1 conversions with DER encoding for Root roles from the Uptane
+    samples.
+    """
+    der_conversion_tester(
+        'repository_data/uptane_mainrepo_root.json', self)
+    der_conversion_tester(
+        'repository_data/uptane_director_root.json', self)
+
+
+
+  def test_3asn_convert_timestamp_tuf(self):
+    """
+    Test ASN.1-only conversion for a Timestamp role from the old TUF sample
+    data.
+    """
+    asn1_pydict_conversion_tester(
         'repository_data/repository/metadata/timestamp.json', self)
 
 
 
-  def test_3_snapshot_partial_convert(self):
-    # Test 3: only_signed conversion PyDict -> ASN1 BER of Snapshot
-    partial_der_conversion_tester(
+  def test_3der_convert_timestamp_tuf(self):
+    """
+    Test ASN.1 conversions with DER encoding for a Timestamp role from the old
+    TUF sample data.
+    """
+    der_conversion_tester(
+        'repository_data/repository/metadata/timestamp.json', self)
+
+
+
+  def test_4asn_convert_timestamp_uptane(self):
+    """
+    Test ASN.1-only conversion for Timestamp roles from Uptane sample data.
+    """
+    asn1_pydict_conversion_tester(
+        'repository_data/uptane_mainrepo_timestamp.json', self)
+
+    asn1_pydict_conversion_tester(
+        'repository_data/uptane_director_timestamp.json', self)
+
+
+  def test_4der_convert_timestamp_uptane(self):
+    """
+    Test ASN.1 conversions with DER encoding for Timestamp roles from Uptane
+    sample data.
+    """
+    der_conversion_tester(
+        'repository_data/uptane_mainrepo_timestamp.json', self)
+
+    der_conversion_tester(
+        'repository_data/uptane_director_timestamp.json', self)
+
+
+
+  def test_5asn_convert_snapshot_tuf(self):
+    """
+    Test ASN.1-only conversion for a Snapshot role from the old TUF sample
+    data.
+    """
+    asn1_pydict_conversion_tester(
         'repository_data/repository/metadata/snapshot.json', self)
 
 
 
-  def test_4_simple_targets_partial_convert(self):
-    """Test 4: only_signed conversion PyDict -> ASN1 BER of simple Targets"""
-    partial_der_conversion_tester(
+  def test_5der_convert_snapshot_tuf(self):
+    """
+    Test ASN.1 conversions with DER encoding for a Snapshot role from the old
+    TUF sample data.
+    """
+    der_conversion_tester(
+        'repository_data/repository/metadata/snapshot.json', self)
+
+
+
+  def test_6asn_convert_snapshot_uptane(self):
+    """
+    Test ASN.1-only conversion for Snapshot roles from Uptane samples.
+    """
+    asn1_pydict_conversion_tester(
+        'repository_data/uptane_mainrepo_snapshot.json', self)
+
+    asn1_pydict_conversion_tester(
+        'repository_data/uptane_director_snapshot.json', self)
+
+
+  def test_6asn_convert_snapshot_uptane(self):
+    """
+    Test ASN.1 conversions with DER encoding for Snapshot roles from Uptane
+    samples.
+    """
+    der_conversion_tester(
+        'repository_data/uptane_mainrepo_snapshot.json', self)
+
+    der_conversion_tester(
+        'repository_data/uptane_director_snapshot.json', self)
+
+
+
+  def test_7asn_convert_targets_minimal(self):
+    """
+    Test ASN.1-only conversion for a Targets role that contains no delegations
+    and specifies no targets. This comes from Uptane sample metadata.
+    """
+    asn1_pydict_conversion_tester(
+        'repository_data/uptane_mainrepo_targets_minimal.json', self)
+
+
+
+  def test_7der_convert_targets_minimal(self):
+    """
+    Test ASN.1 conversions with DER encoding for a Targets role that contains
+    no delegations and specifies no targets. This comes from Uptane sample
+    metadata.
+    """
+    der_conversion_tester(
+        'repository_data/uptane_mainrepo_targets_minimal.json', self)
+
+
+
+  def test_8asn_convert_targets_no_delegations(self):
+    """
+    Test ASN.1-only conversion for Targets roles that contain no delegations but
+    which specify targets. These come from Uptane sample metadata.
+    """
+    asn1_pydict_conversion_tester(
+        'repository_data/uptane_mainrepo_targets_no_delegations.json', self)
+
+    asn1_pydict_conversion_tester(
+        'repository_data/uptane_director_targets.json', self)
+
+
+
+  def test_8der_convert_targets_no_delegations(self):
+    """
+    Test ASN.1 conversion with DER encoding for Targets roles that contain no
+    delegations but which specify targets. These come from Uptane sample
+    metadata.
+    """
+    der_conversion_tester(
+        'repository_data/uptane_mainrepo_targets_no_delegations.json', self)
+
+    der_conversion_tester(
+        'repository_data/uptane_director_targets.json', self)
+
+
+
+  @unittest.expectedFailure
+  # THIS NEXT TEST fails because the provided targets role includes delegations,
+  # and the current ASN.1 conversion code does not support delegations (and
+  # must be updated to do so).
+  def test_9asn_convert_targets_no_targetinfo(self):
+    """
+    Test ASN.1-only conversion for a Targets role that contains delegations
+    but specifies no targets.
+    """
+    asn1_pydict_conversion_tester(
         'repository_data/targets_simpler.json', self)
 
 
 
-  def test_5_delegated_partial_convert(self):
-    """Test 5: only_signed conversion PyDict -> ASN1 BER of delegated role"""
-    partial_der_conversion_tester(
+  @unittest.expectedFailure
+  # THIS NEXT TEST fails because the provided targets role includes delegations,
+  # and the current ASN.1 conversion code does not support delegations (and
+  # must be updated to do so).
+  def test_9der_convert_targets_no_targetinfo(self):
+    """
+    Test ASN.1 conversions with DER encoding for a Targets role that contains
+    delegations but specifies no targets.
+    """
+    der_conversion_tester(
+        'repository_data/targets_simpler.json', self)
+
+
+
+  @unittest.expectedFailure
+  # THIS NEXT TEST FAILS because the provided targets role includes delegations,
+  # and the current ASN.1 conversion code does not support delegations (and
+  # must be updated to do so).
+  def test_10asn_convert_targets(self):
+    """
+    Test ASN.1-only conversion for a Targets role containing delegations and
+    specifying targets. This comes from Uptane sample metadata.
+    """
+    asn1_pydict_conversion_tester(
+        'repository_data/uptane_mainrepo_targets.json', self)
+    # No delegations for the Director, so no Director test case.
+
+
+
+  @unittest.expectedFailure
+  # THIS NEXT TEST FAILS because the provided targets role includes delegations,
+  # and the current ASN.1 conversion code does not support delegations (and
+  # must be updated to do so).
+  def test_10der_convert_targets(self):
+    """
+    Test ASN.1 conversions with DER encoding for a Targets role containing
+    delegations and specifying targets. This comes from Uptane sample metadata.
+    """
+    der_conversion_tester(
+        'repository_data/uptane_mainrepo_targets.json', self)
+    # No delegations for the Director, so no Director test case.
+
+
+
+  def test_11asn_convert_delegated_targets(self):
+    """
+    Test ASN.1-only conversion for a delegated Targets role (from an old TUF
+    set of sample data).
+    """
+    asn1_pydict_conversion_tester(
         'repository_data/repository/metadata/role1.json', self)
+
+
+
+  def test_11der_convert_delegated_targets(self):
+    """
+    Test ASN.1 conversions with DER encoding for a delegated Targets role (from
+    an old TUF set of sample data).
+    """
+    der_conversion_tester(
+        'repository_data/repository/metadata/role1.json', self)
+
+
+
+  def test_12asn_convert_delegated_targets_uptane(self):
+    """
+    Test ASN.1-only conversion for a delegated Targets role from Uptane sample
+    data.
+    """
+    asn1_pydict_conversion_tester(
+        'repository_data/uptane_mainrepo_role1.json', self)
+    # No delegations for the Director, so no Director test case.
+
+
+
+  def test_12der_convert_delegated_targets_uptane(self):
+    """
+    Test ASN.1 conversions with DER encoding for a delegated Targets role from
+    Uptane sample data.
+    """
+    der_conversion_tester(
+        'repository_data/uptane_mainrepo_role1.json', self)
+    # No delegations for the Director, so no Director test case.
 
 
 
@@ -83,63 +335,33 @@ class TestASN1Conversion(unittest.TestCase):
   # string regardless of its type and covert it to ASN1 with the name
   # preserved, in a dict of some sort....
   @unittest.expectedFailure
-  def test_6_targets_w_custom_partial_convert(self):
-    """Test 5: only_signed conversion PyDict -> ASN1 BER of Targets"""
-    partial_der_conversion_tester(
+  def test_13asn_convert_targets_with_custom(self):
+    """
+    Test ASN.1-only conversion for a Targets role that contains an unexpected
+    custom parameter. (This is permitted by the spec.)
+    """
+    asn1_pydict_conversion_tester(
         'repository_data/repository/metadata/targets.json', self)
 
 
 
-
-
-  def test_11_root_uptane_partial_convert(self):
-    """Test 11: only_signed conversion PyDict -> ASN1 BER of Root"""
-    partial_der_conversion_tester(
-        'repository_data/uptane_mainrepo_root.json', self)
-    partial_der_conversion_tester(
-        'repository_data/uptane_director_root.json', self)
-
-
-
-  def test_12_snapshot_uptane_partial_convert(self):
-    """Test 12: only_signed conversion PyDict -> ASN1 BER of Snapshot"""
-    partial_der_conversion_tester(
-        'repository_data/uptane_mainrepo_snapshot.json', self)
-    partial_der_conversion_tester(
-        'repository_data/uptane_director_snapshot.json', self)
-
-
-
-  def test_13_timestamp_uptane_partial_convert(self):
-    """Test 13: only_signed conversion PyDict -> ASN1 BER of Snapshot"""
-    partial_der_conversion_tester(
-        'repository_data/uptane_mainrepo_snapshot.json', self)
-    partial_der_conversion_tester(
-        'repository_data/uptane_director_snapshot.json', self)
-
-
-
-  def test_14_targets_uptane_partial_convert(self):
-    """Test 14: only_signed conversion PyDict -> ASN1 BER of Targets"""
-    partial_der_conversion_tester(
-        'repository_data/uptane_mainrepo_targets.json', self)
-    partial_der_conversion_tester(
-        'repository_data/uptane_director_targets.json', self)
-
-
-
-  def test_15_delegated_uptane_partial_convert(self):
-    """Test 15: only_signed conversion PyDict -> ASN1 BER of Snapshot"""
-    partial_der_conversion_tester(
-        'repository_data/uptane_mainrepo_role1.json', self)
-    # No delegations for the Director, so no second case to test.
-
-
-
-
-
-
-
+  # THIS NEXT TEST fails because the TUF targets.json test file used here
+  # uses a custom parameter that the ASN1 conversion does not yet support,
+  # specifically 'file_permissions'.
+  # TODO: <~> FIX. In order to be TUF compliant, ASN.1 metadata has to be
+  # able to take arbitrary custom key-value pairs.
+  # Targets custom data can be arbitrary. The targetsmetadata.py converter does
+  # not support that and has to. It'll need to treat everything it's given as a
+  # string regardless of its type and covert it to ASN1 with the name
+  # preserved, in a dict of some sort....
+  @unittest.expectedFailure
+  def test_13der_convert_targets_with_custom(self):
+    """
+    Test ASN.1 conversions with DER encoding for a Targets role that contains
+    an unexpected custom parameter. (This is permitted by the spec.)
+    """
+    der_conversion_tester(
+        'repository_data/repository/metadata/targets.json', self)
 
 
 
