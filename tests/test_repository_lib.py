@@ -859,7 +859,7 @@ class TestRepositoryToolFunctions(unittest.TestCase):
     # duplicates are removed.  create_signature() generates a key for the
     # key type of the first argument (i.e., root_rsa_key).
     new_pss_signature = tuf.keys.create_signature(root_rsa_key,
-                                                  root_signable['signed'])
+        tuf.formats.encode_canonical(root_signable['signed']).encode('utf-8'))
     root_signable['signatures'].append(new_pss_signature)
 
     expected_number_of_signatures = len(root_signable['signatures'])

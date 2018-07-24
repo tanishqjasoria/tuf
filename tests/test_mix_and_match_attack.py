@@ -253,6 +253,12 @@ class TestMixAndMatchAttack(unittest_toolbox.Modified_TestCase):
     self.repository_updater.refresh()
 
     try:
+      # Update or load the trusted Targets role metadata, in order to make sure
+      # we've retrieved info about the expected keys for delegated targets role
+      # 'role1'.
+      self.repository_updater.targets_of_role('targets')
+      # Now try updating and validating metadata role role1, expecting a
+      # BadVersionNumberError.
       self.repository_updater.targets_of_role('role1')
    
     # Verify that the specific 'tuf.BadVersionNumberError' exception is raised
