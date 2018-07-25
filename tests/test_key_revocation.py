@@ -352,11 +352,17 @@ class TestKeyRevocation(unittest_toolbox.Modified_TestCase):
  
 
   def test_root_key_revocation(self):
-
-    # TODO: <~> This test function is wrong. It's likely that at the time of
-    # forking, it was incomplete or something.
-    # I have to rewrite it.
-
+    """
+    Three-part test:
+    1: Revoke the old root key (the only key at the time), add a new root key,
+       and try updating. Client will reject because client expects only the
+       old key.
+    2: Sign with the old key in addition to the new key. Client should
+       accept and revoke the old key.
+    3: Sign with only the new key. Client should accept.
+    (Sidenote: if there is a threshold of multiple root keys, the race
+    security issue here is prevented.)
+    """
 
     # First verify that the Root role is properly signed.  Calling
     # refresh() should not raise an exception.
@@ -368,29 +374,31 @@ class TestKeyRevocation(unittest_toolbox.Modified_TestCase):
     root_keyid = root_roleinfo['keyids']
     self.assertEqual(len(root_keyid), 1)
 
+
+    # Test 1: revoke, sign with new only, expect client rejection
+
     # Remove 'root_keyid' and add a new key.  Verify that the client detects
-    # the removal and addition of keys to the Root file.
+    # the removal and addition of keys to the Root file. (We'll use the
+    # targets key in this test for convenience. Obviously, one should not
+    # do that in the real world.)
     repository = repo_tool.load_repository(self.repository_directory)
     repository.root.remove_verification_key(self.role_keys['root']['public'])
-    
-    repository.root.add_verification_key(self.role_keys['snapshot']['public'])
     repository.root.add_verification_key(self.role_keys['targets']['public'])
-    repository.root.add_verification_key(self.role_keys['timestamp']['public'])
-    
-    # Root, Snapshot, and Timestamp must be rewritten.  Root must be written
-    # because the timestamp key has changed; Snapshot, because  Root has
-    # changed, and Timestamp because it must sign its metadata with a new key.
-    repository.root.load_signing_key(self.role_keys['snapshot']['private'])
     repository.root.load_signing_key(self.role_keys['targets']['private'])
-    repository.root.load_signing_key(self.role_keys['timestamp']['private'])
     
-    # Note: we added Timetamp's key to the Root role.
+    # Snapshot and Timestamp must also be rewritten: Snapshot, because Root has
+    # changed, and Timestamp because it must note the new version of Snapshot.
     repository.snapshot.load_signing_key(self.role_keys['snapshot']['private'])
     repository.timestamp.load_signing_key(self.role_keys['timestamp']['private'])
+
+    # Make sure new versions are written. Possibly unnecessary.
+    repository.mark_dirty(['snapshot', 'timestamp', 'root'])
  
     # Root's version number = 2 after the following write().
     repository.write()
     
+    import time; time.sleep(0.1) # Allow files time to copy.
+
     # Move the staged metadata to the "live" metadata.
     shutil.rmtree(os.path.join(self.repository_directory, 'metadata'))
     shutil.copytree(os.path.join(self.repository_directory, 'metadata.staged'),
@@ -405,15 +413,24 @@ class TestKeyRevocation(unittest_toolbox.Modified_TestCase):
       for mirror_exception in exception.mirror_errors.values():
         self.assertTrue(isinstance(mirror_exception, tuf.BadSignatureError))
 
+
+    # Test 2: sign with old and new, expect client acceptance and key revocation
+
     # Load the previous Root signing key so that the the client can update
     # successfully.
     repository.root.load_signing_key(self.role_keys['root']['private'])
+    # Make sure new version is written, and update snapshot so it holds the new
+    # version/hash for root, and timestamp so it marks the new version of
+    # snapshot. Probably unnecessary to mark root dirty (should be automatic).
+    repository.mark_dirty(['root', 'snapshot', 'timestamp'])
     repository.write() 
 
     # Move the staged metadata to the "live" metadata.
     shutil.rmtree(os.path.join(self.repository_directory, 'metadata'))
     shutil.copytree(os.path.join(self.repository_directory, 'metadata.staged'),
                     os.path.join(self.repository_directory, 'metadata'))
+
+    import time; time.sleep(0.1) # Allow files time to copy.
     
     # Root's version number = 3...
     # The client successfully performs a refresh of top-level metadata to get
@@ -422,49 +439,35 @@ class TestKeyRevocation(unittest_toolbox.Modified_TestCase):
     self.assertEqual(self.repository_updater.repositories[
         'defaultrepo'].metadata['current']['root']['version'], 3)
 
-    # Revoke the snapshot and targets keys (added to root) so that multiple
-    # snapshots are created.  Discontinue signing with the old root key now
-    # that the client has successfully updated (note: the old Root key
-    # was revoked, but the repository continued signing with it to allow
-    # the client to update).
+
+    # Test 3: sign with only the new key, except client acceptance
+
+    # Discontinue signing with the old root key now that the client has
+    # successfully updated (note: the old Root key was revoked, but the
+    # repository continued signing with it to allow the client to update).
     repository.root.unload_signing_key(self.role_keys['root']['private'])
-    repository.root.remove_verification_key(self.role_keys['snapshot']['public'])
-    repository.root.unload_signing_key(self.role_keys['snapshot']['private'])
     repository.write()
     
     # Move the staged metadata to the "live" metadata.
     shutil.rmtree(os.path.join(self.repository_directory, 'metadata'))
     shutil.copytree(os.path.join(self.repository_directory, 'metadata.staged'),
                     os.path.join(self.repository_directory, 'metadata'))
+
+    import time; time.sleep(0.1) # Allow files time to copy.
 
     # Root's version number = 4...
     self.repository_updater.refresh() 
-    
-    repository.root.remove_verification_key(self.role_keys['targets']['public'])
-    repository.root.unload_signing_key(self.role_keys['targets']['private'])
-    repository.write()
 
-    # Move the staged metadata to the "live" metadata.
-    shutil.rmtree(os.path.join(self.repository_directory, 'metadata'))
-    shutil.copytree(os.path.join(self.repository_directory, 'metadata.staged'),
-                    os.path.join(self.repository_directory, 'metadata'))
-
-    # Root's version number = 5... 
-    self.repository_updater.refresh()
-    self.assertEqual(self.repository_updater.repositories[
-        'defaultrepo'].metadata['current']['root']['version'], 5)
-    
     # Verify that the client is able to recognize that a new set of keys have
     # been added to the Root role.
     # First, has 'root`_keyid' been removed?
     root_roleinfo = tuf.roledb.get_roleinfo('root', self.repository_name)
     self.assertTrue(root_keyid not in root_roleinfo['keyids'])
 
-    # Second, is Root's new key correct?  The new key should be
-    # Timestamp's.
+    # Second, is Root's new key correct?  The new key should be Targets's.
     self.assertEqual(len(root_roleinfo['keyids']), 1)
-    timestamp_roleinfo = tuf.roledb.get_roleinfo('timestamp', self.repository_name)
-    self.assertEqual(root_roleinfo['keyids'], timestamp_roleinfo['keyids']) 
+    targets_roleinfo = tuf.roledb.get_roleinfo('targets', self.repository_name)
+    self.assertEqual(root_roleinfo['keyids'], targets_roleinfo['keyids']) 
 
 
 
