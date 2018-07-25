@@ -397,8 +397,6 @@ class TestKeyRevocation(unittest_toolbox.Modified_TestCase):
     # Root's version number = 2 after the following write().
     repository.write()
     
-    import time; time.sleep(0.1) # Allow files time to copy.
-
     # Move the staged metadata to the "live" metadata.
     shutil.rmtree(os.path.join(self.repository_directory, 'metadata'))
     shutil.copytree(os.path.join(self.repository_directory, 'metadata.staged'),
@@ -430,8 +428,6 @@ class TestKeyRevocation(unittest_toolbox.Modified_TestCase):
     shutil.copytree(os.path.join(self.repository_directory, 'metadata.staged'),
                     os.path.join(self.repository_directory, 'metadata'))
 
-    import time; time.sleep(0.1) # Allow files time to copy.
-    
     # Root's version number = 3...
     # The client successfully performs a refresh of top-level metadata to get
     # the latest changes.
@@ -452,8 +448,6 @@ class TestKeyRevocation(unittest_toolbox.Modified_TestCase):
     shutil.rmtree(os.path.join(self.repository_directory, 'metadata'))
     shutil.copytree(os.path.join(self.repository_directory, 'metadata.staged'),
                     os.path.join(self.repository_directory, 'metadata'))
-
-    import time; time.sleep(0.1) # Allow files time to copy.
 
     # Root's version number = 4...
     self.repository_updater.refresh() 
