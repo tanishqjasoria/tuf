@@ -14,6 +14,7 @@ import tuf.encoding.snapshot_asn1_coder as snapshot_asn1_coder
 import tuf.encoding.timestamp_asn1_coder as timestamp_asn1_coder
 import tuf.encoding.targets_asn1_coder as targets_asn1_coder
 import tuf.encoding.metadata_asn1_definitions as metadata_asn1_spec
+from tuf.encoding import hex_from_octetstring
 
 import tuf.keys
 import hashlib
@@ -28,6 +29,19 @@ class TestASN1Conversion(unittest.TestCase):
 
     cls.test_signing_key = repo_tool.import_ed25519_privatekey_from_file(
         private_key_fname, 'password')
+
+
+  def test_hex_from_octetstring(self):
+
+    original_hex_str = '5f1a1354'
+
+    octet_str = metadata_asn1_spec.OctetString(hexValue=original_hex_str)
+
+    hex_str = hex_from_octetstring(octet_str)
+
+    self.assertEqual(original_hex_str, hex_str)
+
+    # TODO: Add some more tests using key data.
 
 
 
