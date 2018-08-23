@@ -164,7 +164,7 @@ def set_keys(json_signed, rootPublicKeyid, timestampPublicKeyid,
   targetsPublicKey['publicKeyType'] = \
                                       int(PublicKeyType(targetsPublicKeyType))
   targetsPublicKeyValue = OctetString(
-      json_signed['keys'][targetsPublicKeyid]['keyval']['public'])
+      hexValue=json_signed['keys'][targetsPublicKeyid]['keyval']['public'])
   targetsPublicKey['publicKeyValue'] = targetsPublicKeyValue
   keys[3] = targetsPublicKey
 
