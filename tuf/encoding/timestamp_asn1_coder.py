@@ -18,6 +18,7 @@ from __future__ import unicode_literals
 from pyasn1.type import univ, tag
 
 from tuf.encoding.metadata_asn1_definitions import *
+from tuf.encoding import hex_from_octetstring
 
 import calendar
 from datetime import datetime #import datetime
@@ -87,9 +88,7 @@ def get_json_signed(asn_metadata):
   timestampMetadata = asn_signed['body']['timestampMetadata']
   filename = str(timestampMetadata['filename'])
   # TODO: Remove hardcoded hash assumptions here.
-  sha256 = timestampMetadata['hashes'][0]['digest']['octetString'].prettyPrint() # TODO: Probably not the way to go long-term.
-  assert sha256.startswith('0x')
-  sha256 = sha256[2:]
+  sha256 = hex_from_octetstring(timestampMetadata['hashes'][0]['digest']['octetString'])
   json_signed['meta'] = {
     filename : {
       'hashes': {

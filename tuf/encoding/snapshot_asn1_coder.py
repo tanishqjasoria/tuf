@@ -18,6 +18,7 @@ from __future__ import unicode_literals
 from pyasn1.type import univ, tag
 
 from tuf.encoding.metadata_asn1_definitions import *
+from tuf.encoding import hex_from_octetstring
 
 import tuf.conf
 import calendar
@@ -225,13 +226,7 @@ def get_json_signed(asn_metadata):
     #     return asn_enum_value.namedValues[asn_enum_value][0]
     #
     hashtype = asn_hash_info['function'].namedValues[asn_hash_info['function']][0]
-    hashval = asn_hash_info['digest']['octetString'].prettyPrint()  # TODO: "prettyPrint()" is probably not the way to go long-term.
-
-    if not hashval.startswith('0x'):
-      raise tuf.Error('ASN1 Conversion failure for Snapshot role: Given hash '
-        'value in root role info in Snapshot for hash type ' + str(hashtype) +
-        ' does not start with "0x".')
-    hashval = hashval[2:] # Skip the '0x' header on the hash.
+    hashval = hex_from_octetstring(asn_hash_info['digest']['octetString'])
 
     hashes[hashtype] = hashval
 

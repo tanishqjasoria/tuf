@@ -14,6 +14,8 @@ import tuf.formats
 import logging
 import hashlib
 
+from tuf.encoding import hex_from_octetstring
+
 # See 'log.py' to learn how logging is handled in TUF.
 logger = logging.getLogger('tuf.asn1_codec')
 
@@ -139,14 +141,10 @@ def convert_signed_der_to_dersigned_json(der_data):
 
   for asn_signature in asn_signatures:
     json_signatures.append({
-        # Next lines are not ideal: prettyPrint and having to manually skip the
-        # first two characters (which we expect to be '0x' indicating a hex
-        # string). See if there's a better method of converting from the
-        # octetString to what TUF expects.
-        'keyid': asn_signature['keyid']['octetString'].prettyPrint()[2:],
+        'keyid': hex_from_octetstring(asn_signature['keyid']['octetString']),
         # TODO: See if it's possible to tweak the definition of 'method' so that str(method) returns what we want rather here than the enum, so that we don't have to do make this weird enum translation call?
         'method': asn_signature['method'].namedValues[asn_signature['method']._value][0], #str(asn_signature['method']),
-        'sig': asn_signature['value']['octetString'].prettyPrint()[2:]})
+        'sig': hex_from_octetstring(asn_signature['value']['octetString'])})
 
   return {'signatures': json_signatures, 'signed': json_signed}
 

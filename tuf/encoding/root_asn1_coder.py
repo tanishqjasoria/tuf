@@ -18,6 +18,7 @@ from __future__ import unicode_literals
 from pyasn1.type import univ, tag
 
 from tuf.encoding.metadata_asn1_definitions import *
+from tuf.encoding import hex_from_octetstring
 
 import calendar
 from datetime import datetime #import datetime
@@ -73,16 +74,12 @@ def get_json_signed(asn_metadata):
   json_keys = {}
   for i in range(4):
     publicKey = keys[i]
-    publicKeyid = publicKey['publicKeyid']['octetString'].prettyPrint()
-    assert publicKeyid.startswith('0x')
-    publicKeyid = publicKeyid[2:]
+    publicKeyid = hex_from_octetstring(publicKey['publicKeyid']['octetString'])
     # Only ed25519 keys allowed for now.
     publicKeyType = int(publicKey['publicKeyType'])
     assert publicKeyType == 1
     publicKeyType = 'ed25519'
-    publicKeyValue = publicKey['publicKeyValue']['octetString'].prettyPrint()
-    assert publicKeyValue.startswith('0x')
-    publicKeyValue = publicKeyValue[2:]
+    publicKeyValue = hex_from_octetstring(publicKey['publicKeyValue']['octetString'])
     json_keys[publicKeyid] = {
       'keyid_hash_algorithms': ['sha256', 'sha512'], # TODO: <~> This was hard-coded. Fix it.
       'keytype': publicKeyType,
@@ -106,10 +103,7 @@ def get_json_signed(asn_metadata):
     topLevelRole = roles[i]
     rolename = roletype_to_rolename[int(topLevelRole['role'])]
     assert topLevelRole['numberOfKeyids'] == 1
-    #keyids = [str(topLevelRole['keyids'][0])]
-    keyid = topLevelRole['keyids'][0]['octetString'].prettyPrint()
-    assert keyid.startswith('0x')
-    keyid = keyid[2:]
+    keyid = hex_from_octetstring(topLevelRole['keyids'][0]['octetString'])
     keyids = [keyid]
     threshold = int(topLevelRole['threshold'])
     assert threshold == 1

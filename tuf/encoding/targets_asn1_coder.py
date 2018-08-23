@@ -18,6 +18,7 @@ from __future__ import unicode_literals
 from pyasn1.type import univ, tag
 
 from tuf.encoding.metadata_asn1_definitions import *
+from tuf.encoding import hex_from_octetstring
 
 import calendar
 from datetime import datetime #import datetime
@@ -280,16 +281,12 @@ def set_json_keys(json_signed, delegations):
 
   for i in range(numberOfKeys):
     key = keys[i]
-    keyid = key['publicKeyid']['octetString'].prettyPrint() #str(key['publicKeyid'])
-    assert keyid.startswith('0x')
-    keyid = keyid[2:]
+    keyid = hex_from_octetstring(key['publicKeyid']['octetString'])
     keytype = int(key['publicKeyType'])
     # FIXME: Only ed25519 keys allowed for now.
     assert keytype == 1
     keytype = 'ed25519'
-    octetString =  key['publicKeyValue']['octetString'].prettyPrint()
-    assert octetString.startswith('0x')
-    keyval = octetString[2:]
+    keyval =  hex_from_octetstring(key['publicKeyValue']['octetString'])
     json_keys[keyid] = {
       "keyid_hash_algorithms": [
         "sha256",
@@ -374,9 +371,7 @@ def set_json_targets(json_signed, targetsMetadata):
     for j in range(numberOfHashes):
       hash = hashes[j]
       hash_function = hashenum_to_hashfunction[int(hash['function'])]
-      octetString = hash['digest']['octetString'].prettyPrint()
-      assert octetString.startswith('0x')
-      hash_value = octetString[2:]
+      hash_value = hex_from_octetstring(hash['digest']['octetString'])
       json_hashes[hash_function] = hash_value
     filemeta['hashes'] = json_hashes
 
