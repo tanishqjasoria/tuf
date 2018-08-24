@@ -15,7 +15,7 @@
 """
 from __future__ import unicode_literals
 
-from pyasn1.type import univ, tag
+from pyasn1.type import tag
 
 from tuf.encoding.metadata_asn1_definitions import *
 from tuf.encoding import hex_from_octetstring
@@ -74,12 +74,12 @@ def get_json_signed(asn_metadata):
   json_keys = {}
   for i in range(4):
     publicKey = keys[i]
-    publicKeyid = hex_from_octetstring(publicKey['publicKeyid']['octetString'])
+    publicKeyid = hex_from_octetstring(publicKey['publicKeyid'])
     # Only ed25519 keys allowed for now.
     publicKeyType = int(publicKey['publicKeyType'])
     assert publicKeyType == 1
     publicKeyType = 'ed25519'
-    publicKeyValue = hex_from_octetstring(publicKey['publicKeyValue']['octetString'])
+    publicKeyValue = hex_from_octetstring(publicKey['publicKeyValue'])
     json_keys[publicKeyid] = {
       'keyid_hash_algorithms': ['sha256', 'sha512'], # TODO: <~> This was hard-coded. Fix it.
       'keytype': publicKeyType,
@@ -103,7 +103,7 @@ def get_json_signed(asn_metadata):
     topLevelRole = roles[i]
     rolename = roletype_to_rolename[int(topLevelRole['role'])]
     assert topLevelRole['numberOfKeyids'] == 1
-    keyid = hex_from_octetstring(topLevelRole['keyids'][0]['octetString'])
+    keyid = hex_from_octetstring(topLevelRole['keyids'][0])
     keyids = [keyid]
     threshold = int(topLevelRole['threshold'])
     assert threshold == 1
@@ -123,90 +123,48 @@ def set_keys(json_signed, rootPublicKeyid, timestampPublicKeyid,
 
   rootPublicKey = PublicKey()
   # NOTE: Only 1 key allowed for now!
-  keyid = Keyid().subtype(explicitTag=tag.Tag(tag.tagClassContext,
-                                              tag.tagFormatConstructed, 0))
-  keyid['octetString'] = univ.OctetString(hexValue=rootPublicKeyid)\
-                         .subtype(implicitTag=tag.Tag(tag.tagClassContext,
-                                                      tag.tagFormatSimple, 1))
+  keyid = Keyid(hexValue=rootPublicKeyid)
   rootPublicKey['publicKeyid'] = keyid
   rootPublicKeyType = json_signed['keys'][rootPublicKeyid]['keytype']
   rootPublicKey['publicKeyType'] = int(PublicKeyType(rootPublicKeyType))
-  rootPublicKeyValue = BinaryData()\
-                       .subtype(explicitTag=tag.Tag(tag.tagClassContext,
-                                                    tag.tagFormatConstructed,
-                                                    2))
-  rootPublicKeyHexString = json_signed['keys'][rootPublicKeyid]['keyval']\
-                                      ['public']
-  rootPublicKeyValue['octetString'] = \
-    univ.OctetString(hexValue=rootPublicKeyHexString)\
-    .subtype(implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 1))
+  rootPublicKeyValue = OctetString(
+      hexValue=json_signed['keys'][rootPublicKeyid]['keyval']['public'])
   rootPublicKey['publicKeyValue'] = rootPublicKeyValue
   keys[0] = rootPublicKey
 
   timestampPublicKey = PublicKey()
   # NOTE: Only 1 key allowed for now!
-  keyid = Keyid().subtype(explicitTag=tag.Tag(tag.tagClassContext,
-                                              tag.tagFormatConstructed, 0))
-  keyid['octetString'] = univ.OctetString(hexValue=timestampPublicKeyid)\
-                         .subtype(implicitTag=tag.Tag(tag.tagClassContext,
-                                                      tag.tagFormatSimple, 1))
+  keyid = Keyid(hexValue=timestampPublicKeyid)
   timestampPublicKey['publicKeyid'] = keyid
   timestampPublicKeyType = json_signed['keys'][timestampPublicKeyid]['keytype']
   timestampPublicKey['publicKeyType'] = \
                                       int(PublicKeyType(timestampPublicKeyType))
-  timestampPublicKeyValue = \
-                BinaryData().subtype(explicitTag=tag.Tag(tag.tagClassContext,
-                                                 tag.tagFormatConstructed, 2))
-  timestampPublicKeyHexString = json_signed['keys'][timestampPublicKeyid]\
-                                           ['keyval']['public']
-  timestampPublicKeyValue['octetString'] = \
-    univ.OctetString(hexValue=timestampPublicKeyHexString)\
-    .subtype(implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 1))
+  timestampPublicKeyValue = OctetString(
+      hexValue=json_signed['keys'][timestampPublicKeyid]['keyval']['public'])
   timestampPublicKey['publicKeyValue'] = timestampPublicKeyValue
   keys[1] = timestampPublicKey
 
   snapshotPublicKey = PublicKey()
   # NOTE: Only 1 key allowed for now!
-  keyid = Keyid().subtype(explicitTag=tag.Tag(tag.tagClassContext,
-                                              tag.tagFormatConstructed, 0))
-  keyid['octetString'] = univ.OctetString(hexValue=snapshotPublicKeyid)\
-                         .subtype(implicitTag=tag.Tag(tag.tagClassContext,
-                                                      tag.tagFormatSimple, 1))
+  keyid = Keyid(hexValue=snapshotPublicKeyid)
   snapshotPublicKey['publicKeyid'] = keyid
   snapshotPublicKeyType = json_signed['keys'][snapshotPublicKeyid]['keytype']
   snapshotPublicKey['publicKeyType'] = \
                                       int(PublicKeyType(snapshotPublicKeyType))
-  snapshotPublicKeyValue = \
-          BinaryData().subtype(explicitTag=tag.Tag(tag.tagClassContext,
-                                                   tag.tagFormatConstructed, 2))
-  snapshotPublicKeyHexString = json_signed['keys'][snapshotPublicKeyid]\
-                                          ['keyval']['public']
-  snapshotPublicKeyValue['octetString'] = \
-    univ.OctetString(hexValue=snapshotPublicKeyHexString)\
-    .subtype(implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 1))
+  snapshotPublicKeyValue = OctetString(hexValue=json_signed['keys']
+      [snapshotPublicKeyid]['keyval']['public'])
   snapshotPublicKey['publicKeyValue'] = snapshotPublicKeyValue
   keys[2] = snapshotPublicKey
 
   targetsPublicKey = PublicKey()
   # NOTE: Only 1 key allowed for now!
-  keyid = Keyid().subtype(explicitTag=tag.Tag(tag.tagClassContext,
-                                              tag.tagFormatConstructed, 0))
-  keyid['octetString'] = univ.OctetString(hexValue=targetsPublicKeyid)\
-                         .subtype(implicitTag=tag.Tag(tag.tagClassContext,
-                                                      tag.tagFormatSimple, 1))
+  keyid = Keyid(hexValue=targetsPublicKeyid)
   targetsPublicKey['publicKeyid'] = keyid
   targetsPublicKeyType = json_signed['keys'][targetsPublicKeyid]['keytype']
   targetsPublicKey['publicKeyType'] = \
                                       int(PublicKeyType(targetsPublicKeyType))
-  targetsPublicKeyValue = BinaryData()\
-                          .subtype(explicitTag=tag.Tag(tag.tagClassContext,
-                                                       tag.tagFormatConstructed,
-                                                       2))
-  targetsPublicKeyHexString = json_signed['keys'][targetsPublicKeyid]\
-                                          ['keyval']['public']
-  targetsPublicKeyValue['octetString'] = \
-    univ.OctetString(hexValue=targetsPublicKeyHexString)\
-    .subtype(implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 1))
+  targetsPublicKeyValue = OctetString(
+      hexValue=json_signed['keys'][targetsPublicKeyid]['keyval']['public'])
   targetsPublicKey['publicKeyValue'] = targetsPublicKeyValue
   keys[3] = targetsPublicKey
 
@@ -224,10 +182,8 @@ def set_roles(json_signed, rootPublicKeyid, timestampPublicKeyid,
   rootRole['role'] = int(RoleType('root'))
   rootRoleKeyids = Keyids().subtype(implicitTag=tag.Tag(tag.tagClassContext,
                                                         tag.tagFormatSimple, 4))
-  rootRoleKeyid = Keyid()
-  rootRoleKeyid['octetString'] = \
-    univ.OctetString(hexValue=rootPublicKeyid)\
-    .subtype(implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 1))
+  rootRoleKeyid = Keyid(hexValue=rootPublicKeyid)
+
   # Some damned bug in pyasn1 I could not care less to fix right now.
   rootRoleKeyids.setComponentByPosition(0, rootRoleKeyid, False)
   rootRole['numberOfKeyids'] = 1
@@ -241,10 +197,8 @@ def set_roles(json_signed, rootPublicKeyid, timestampPublicKeyid,
   snapshotRoleKeyids = Keyids().subtype(implicitTag=tag.Tag(tag.tagClassContext,
                                                             tag.tagFormatSimple,
                                                             4))
-  snapshotRoleKeyid = Keyid()
-  snapshotRoleKeyid['octetString'] = \
-    univ.OctetString(hexValue=snapshotPublicKeyid)\
-    .subtype(implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 1))
+  snapshotRoleKeyid = Keyid(hexValue=snapshotPublicKeyid)
+
   # Some damned bug in pyasn1 I could not care less to fix right now.
   snapshotRoleKeyids.setComponentByPosition(0, snapshotRoleKeyid, False)
   snapshotRole['numberOfKeyids'] = 1
@@ -258,10 +212,8 @@ def set_roles(json_signed, rootPublicKeyid, timestampPublicKeyid,
   targetsRoleKeyids = Keyids().subtype(implicitTag=tag.Tag(tag.tagClassContext,
                                                            tag.tagFormatSimple,
                                                            4))
-  targetsRoleKeyid = Keyid()
-  targetsRoleKeyid['octetString'] = \
-    univ.OctetString(hexValue=targetsPublicKeyid)\
-    .subtype(implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 1))
+  targetsRoleKeyid = Keyid(hexValue=targetsPublicKeyid)
+
   # Some damned bug in pyasn1 I could not care less to fix right now.
   targetsRoleKeyids.setComponentByPosition(0, targetsRoleKeyid, False)
   targetsRole['numberOfKeyids'] = 1
@@ -275,10 +227,8 @@ def set_roles(json_signed, rootPublicKeyid, timestampPublicKeyid,
   timestampRoleKeyids = Keyids()\
                         .subtype(implicitTag=tag.Tag(tag.tagClassContext,
                                                      tag.tagFormatSimple, 4))
-  timestampRoleKeyid = Keyid()
-  timestampRoleKeyid['octetString'] = \
-    univ.OctetString(hexValue=timestampPublicKeyid)\
-    .subtype(implicitTag=tag.Tag(tag.tagClassContext, tag.tagFormatSimple, 1))
+  timestampRoleKeyid = Keyid(hexValue=timestampPublicKeyid)
+
   # Some damned bug in pyasn1 I could not care less to fix right now.
   timestampRoleKeyids.setComponentByPosition(0, timestampRoleKeyid, False)
   timestampRole['numberOfKeyids'] = 1
