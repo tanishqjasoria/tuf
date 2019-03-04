@@ -33,6 +33,7 @@ import shutil
 import logging
 import tempfile
 import fnmatch
+import time
 
 import tuf
 import tuf.hash
@@ -1168,3 +1169,20 @@ def digests_are_equal(digest1, digest2):
       are_equal = False
 
   return are_equal
+
+
+
+
+
+def get_current_time():
+  '''
+  If the clock has been overridden with some manually updated trusted time,
+  provide that.  Otherwise, provide the time in seconds (rounded down to an
+  integer) since the epoch.
+  '''
+  if tuf.conf.CLOCK_OVERRIDE is not None:
+    tuf.formats.UNIX_TIMESTAMP_SCHEMA.check_match(tuf.conf.CLOCK_OVERRIDE)
+    return tuf.conf.CLOCK_OVERRIDE
+
+  else:
+    return int(time.time())
