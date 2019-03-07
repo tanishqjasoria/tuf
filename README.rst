@@ -1,4 +1,4 @@
-A Framework for Securing Software Update Systems
+A Framework for Securing Software Update Systems, Adapted for Uptane's Purposes
 ------------------------------------------------
 
 .. image:: https://travis-ci.org/theupdateframework/tuf.svg?branch=develop
