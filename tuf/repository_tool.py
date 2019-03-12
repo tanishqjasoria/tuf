@@ -622,25 +622,25 @@ class Metadata(object):
     # 1 year, 3 months, 1 week, and 1 day from the current time, respectively.
     if expires is None:
       if self.rolename == 'root':
-        expires = \
-          tuf.formats.unix_timestamp_to_datetime(int(time.time() + ROOT_EXPIRATION))
-      
+        expires = tuf.formats.unix_timestamp_to_datetime(
+            tuf.util.get_current_time() + ROOT_EXPIRATION)
+
       elif self.rolename == 'Targets':
-        expires = \
-          tuf.formats.unix_timestamp_to_datetime(int(time.time() + TARGETS_EXPIRATION))
-      
+        expires = tuf.formats.unix_timestamp_to_datetime(
+            tuf.util.get_current_time() + TARGETS_EXPIRATION)
+
       elif self.rolename == 'Snapshot':
-        expires = \
-          tuf.formats.unix_timestamp_to_datetime(int(time.time() + SNAPSHOT_EXPIRATION))
-  
+        expires = tuf.formats.unix_timestamp_to_datetime(
+            tuf.util.get_current_time() + SNAPSHOT_EXPIRATION)
+
       elif self.rolename == 'Timestamp':
-        expires = \
-          tuf.formats.unix_timestamp_to_datetime(int(time.time() + TIMESTAMP_EXPIRATION))
+        expires = tuf.formats.unix_timestamp_to_datetime(
+            tuf.util.get_current_time() + TIMESTAMP_EXPIRATION)
 
       else:
-        expires = \
-          tuf.formats.unix_timestamp_to_datetime(int(time.time() + TIMESTAMP_EXPIRATION))
-    
+        expires = tuf.formats.unix_timestamp_to_datetime(
+            tuf.util.get_current_time() + TIMESTAMP_EXPIRATION)
+
     # Is 'expires' a datetime.datetime() object?
     # Raise 'tuf.FormatError' if not.
     if not isinstance(expires, datetime.datetime):
@@ -652,9 +652,9 @@ class Metadata(object):
     expires = expires.replace(microsecond = 0)
     
     # Ensure the expiration has not already passed.
-    current_datetime = \
-      tuf.formats.unix_timestamp_to_datetime(int(time.time()))
-    
+    current_datetime = tuf.formats.unix_timestamp_to_datetime(
+        tuf.util.get_current_time())
+
     if expires < current_datetime:
       raise tuf.Error(repr(key) + ' has already expired.')
    
@@ -1255,9 +1255,9 @@ class Metadata(object):
     datetime_object = datetime_object.replace(microsecond = 0)
     
     # Ensure the expiration has not already passed.
-    current_datetime_object = \
-      tuf.formats.unix_timestamp_to_datetime(int(time.time()))
-    
+    current_datetime_object = tuf.formats.unix_timestamp_to_datetime(
+        tuf.util.get_current_time())
+
     if datetime_object < current_datetime_object:
       raise tuf.Error(repr(self.rolename) + ' has already expired.')
    
@@ -1426,8 +1426,8 @@ class Root(Metadata):
 
     # By default, 'snapshot' metadata is set to expire 1 week from the current
     # time.  The expiration may be modified.
-    expiration = \
-      tuf.formats.unix_timestamp_to_datetime(int(time.time() + ROOT_EXPIRATION))
+    expiration = tuf.formats.unix_timestamp_to_datetime(
+        tuf.util.get_current_time() + ROOT_EXPIRATION)
     expiration = expiration.isoformat() + 'Z'
 
     roleinfo = {'keyids': [], 'signing_keyids': [], 'threshold': 1, 
@@ -1491,8 +1491,8 @@ class Timestamp(Metadata):
 
     # By default, 'snapshot' metadata is set to expire 1 week from the current
     # time.  The expiration may be modified.
-    expiration = \
-      tuf.formats.unix_timestamp_to_datetime(int(time.time() + TIMESTAMP_EXPIRATION))
+    expiration = tuf.formats.unix_timestamp_to_datetime(
+        tuf.util.get_current_time() + TIMESTAMP_EXPIRATION)
     expiration = expiration.isoformat() + 'Z'
 
     roleinfo = {'keyids': [], 'signing_keyids': [], 'threshold': 1,
@@ -1550,8 +1550,8 @@ class Snapshot(Metadata):
 
     # By default, 'snapshot' metadata is set to expire 1 week from the current
     # time.  The expiration may be modified.
-    expiration = \
-      tuf.formats.unix_timestamp_to_datetime(int(time.time() + SNAPSHOT_EXPIRATION))
+    expiration = tuf.formats.unix_timestamp_to_datetime(
+        tuf.util.get_current_time() + SNAPSHOT_EXPIRATION)
     expiration = expiration.isoformat() + 'Z'
 
     roleinfo = {'keyids': [], 'signing_keyids': [], 'threshold': 1,
@@ -1648,8 +1648,8 @@ class Targets(Metadata):
   
     # By default, Targets objects are set to expire 3 months from the current
     # time.  May be later modified.
-    expiration = \
-      tuf.formats.unix_timestamp_to_datetime(int(time.time() + TARGETS_EXPIRATION))
+    expiration = tuf.formats.unix_timestamp_to_datetime(
+        tuf.util.get_current_time() + TARGETS_EXPIRATION)
     expiration = expiration.isoformat() + 'Z'
 
     # If 'roleinfo' is not provided, set an initial default.
@@ -2256,8 +2256,8 @@ class Targets(Metadata):
    
     # Create a new Targets object for the 'rolename' delegation.  An initial
     # expiration is set (3 months from the current time).
-    expiration = \
-      tuf.formats.unix_timestamp_to_datetime(int(time.time() + TARGETS_EXPIRATION))
+    expiration = tuf.formats.unix_timestamp_to_datetime(
+        tuf.util.get_current_time() + TARGETS_EXPIRATION)
     expiration = expiration.isoformat() + 'Z'
     
     roleinfo = {'name': rolename, 'keyids': keyids, 'signing_keyids': [],

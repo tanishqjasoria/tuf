@@ -149,3 +149,10 @@ SUPPORTED_URI_SCHEMES = ['http', 'https', 'file']
 
 # By default, limit number of delegatees we visit for any target.
 MAX_NUMBER_OF_DELEGATIONS = 2**5
+
+
+# To override use of the system clock and use a fixed, trusted time value,
+# manually updated, alter CLOCK_OVERRIDE from None to an integer time
+# conforming to tuf.formats.UNIX_TIMESTAMP_SCHEMA (similar to what you would
+# get from int(time.time())).
+CLOCK_OVERRIDE = None

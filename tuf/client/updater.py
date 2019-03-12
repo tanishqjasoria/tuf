@@ -2883,9 +2883,10 @@ class SingleRepoUpdater(object):
     # If the current time has surpassed the expiration date, raise
     # an exception.  'expires' is in 'tuf.formats.ISO8601_DATETIME_SCHEMA'
     # format (e.g., '1985-10-21T01:22:00Z'.)  Convert it to a unix timestamp and
-    # compare it against the current time.time() (also in Unix/POSIX time
-    # format, although with microseconds attached.)
-    current_time = int(time.time())
+    # compare it against the current time from tuf.util.get_current_time(),
+    # which is also in Unix/POSIX time format, and allows manual override of
+    # the system clock.)
+    current_time = tuf.util.get_current_time()
 
     # Generate a user-friendly error message if 'expires' is less than the
     # current time (i.e., a local time.)
