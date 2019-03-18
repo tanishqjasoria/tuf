@@ -311,12 +311,17 @@ class TestKeydb(unittest.TestCase):
     consistent_snapshot = False
     expires = '1985-10-21T01:21:00Z'
     compression_algorithms = ['gz']
-   
-    root_metadata = tuf.formats.RootFile.make_metadata(version,
-                                                       expires,
-                                                       keydict, roledict,
-                                                       consistent_snapshot,
-                                                       compression_algorithms)
+
+    root_metadata = tuf.formats.build_dict_conforming_to_schema(
+        tuf.formats.ROOT_SCHEMA,
+        _type='Root',
+        version=version,
+        expires=expires,
+        keys=keydict,
+        roles=roledict,
+        consistent_snapshot=consistent_snapshot,
+        compression_algorithms=compression_algorithms)
+
     self.assertEqual(None, tuf.keydb.create_keydb_from_root_metadata(root_metadata))
     tuf.keydb.create_keydb_from_root_metadata(root_metadata)
 
@@ -367,12 +372,18 @@ class TestKeydb(unittest.TestCase):
     version = 8
     expires = '1985-10-21T01:21:00Z'
     compression_algorithms = ['gz']
-    
-    root_metadata = tuf.formats.RootFile.make_metadata(version,
-                                                       expires,
-                                                       keydict, roledict,
-                                                       consistent_snapshot,
-                                                       compression_algorithms)
+
+    root_metadata = tuf.formats.build_dict_conforming_to_schema(
+        tuf.formats.ROOT_SCHEMA,
+        _type='Root',
+        spec_version='1.0',
+        version=version,
+        expires=expires,
+        keys=keydict,
+        roles=roledict,
+        consistent_snapshot=consistent_snapshot,
+        compression_algorithms=compression_algorithms)
+
     self.assertEqual(None, tuf.keydb.create_keydb_from_root_metadata(root_metadata))
 
     # Ensure only 'keyid2' was added to the keydb database.  'keyid' and

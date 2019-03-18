@@ -20,8 +20,7 @@
   module should be read and understood before tackling this module.
 
   'formats.py' can be broken down into three sections.  (1) Schemas and object
-  matching.  (2) Classes that represent Role Metadata and help produce correctly
-  formatted files.  (3) Functions that help produce or verify TUF objects.
+  matching.  (2) Functions that help produce or verify TUF objects.
 
   The first section deals with schemas and object matching based on format.
   There are two ways of checking the format of objects.  The first method
@@ -45,17 +44,7 @@
   the match fails.  There are numerous variations of object checking
   provided by 'formats.py' and 'schema.py'.
 
-  The second section deals with the role metadata classes.  There are
-  multiple top-level roles, each with differing metadata formats.
-  Example:
-  
-  root_object = tuf.formats.RootFile.from_metadata(root_metadata_file)
-  targets_metadata = tuf.formats.TargetsFile.make_metadata(...)
-
-  The input and output of these classes are checked against their respective
-  schema to ensure correctly formatted metadata.
-
-  The last section contains miscellaneous functions related to the format of
+  The second section contains miscellaneous functions related to the format of
   TUF objects.
   Example: 
   
@@ -684,161 +673,41 @@ class TimestampFile(MetaFile):
 
 
 
+def build_dict_conforming_to_schema(schema, **kwargs):
+  """
+  Given a schema object (for example, TIMESTAMP_SCHEMA from this module) and
+  a set of keyword arguments, create a dictionary that conforms to the given
+  schema, using the keyword arguments to define the elements of the new dict.
 
-class RootFile(MetaFile):
-  def __init__(self, version, expires, keys, roles, consistent_snapshot,
-               compression_algorithms):
-    self.info = {}
-    self.info['version'] = version
-    self.info['expires'] = expires
-    self.info['keys'] = keys
-    self.info['roles'] = roles
-    self.info['consistent_snapshot'] = consistent_snapshot
-    self.info['compression_algorithms'] = compression_algorithms
+  Checks the result to make sure that it conforms to the given schema, raising
+  an error if not.
 
+  Returns the new dict conforming to the schema if there are no problems.
+  """
 
-  @staticmethod
-  def from_metadata(object):
-    # Is 'object' a Root metadata file?
-    # Raise 'tuf.FormatError' if not.
-    ROOT_SCHEMA.check_match(object) 
-    
-    version = object['version']
-    expires = object['expires']
-    keys = object['keys']
-    roles = object['roles']
-    consistent_snapshot = object['consistent_snapshot']
-    compression_algorithms = object['compression_algorithms']
-    
-    return RootFile(version, expires, keys, roles, consistent_snapshot,
-                    compression_algorithms)
+  # Check that schema supports a check_match call.
+  # Duck typing version of this check:
+  if not hasattr(schema, 'check_match'):
+    raise ValueError(
+        'The given "schema" does not seem to be a schema.  It has no '
+        '"check_match" method.  Given schema: ' + repr(schema))
 
+  # # Strict typing version of this check:
+  # # Check that schema_name is a SCHEMA.Object.
+  # if not isinstance(schema, schema.Schema):
+  #   raise ValueError(
+  #       'The first argument must be a schema.Schema object, but is not. '
+  #       'Given schema: ' + repr(schema))
 
-  @staticmethod
-  def make_metadata(version, expiration_date, keydict, roledict,
-                    consistent_snapshot, compression_algorithms):
-    result = {'_type' : 'Root'}
-    result['version'] = version
-    result['expires'] = expiration_date
-    result['keys'] = keydict
-    result['roles'] = roledict
-    result['consistent_snapshot'] = consistent_snapshot
-    result['compression_algorithms'] = compression_algorithms
-    
-    # Is 'result' a Root metadata file?
-    # Raise 'tuf.FormatError' if not.
-    ROOT_SCHEMA.check_match(result)
-    
-    return result
+  # The return value.
+  d = {}
 
+  for key, value in kwargs.items():
+    d[key] = value
 
+  schema.check_match(d)
 
-
-
-class SnapshotFile(MetaFile):
-  def __init__(self, version, expires, versiondict):
-    self.info = {}
-    self.info['version'] = version
-    self.info['expires'] = expires
-    self.info['meta'] = versiondict
-
-
-  @staticmethod
-  def from_metadata(object):
-    # Is 'object' a Snapshot metadata file?
-    # Raise 'tuf.FormatError' if not.
-    SNAPSHOT_SCHEMA.check_match(object)
-    
-    version = object['version']
-    expires = object['expires']
-    versiondict = object['meta']
-    
-    return SnapshotFile(version, expires, versiondict)
-
-
-  @staticmethod
-  def make_metadata(version, expiration_date, versiondict):
-    result = {'_type' : 'Snapshot'}
-    result['version'] = version 
-    result['expires'] = expiration_date
-    result['meta'] = versiondict
-
-    # Is 'result' a Snapshot metadata file?
-    # Raise 'tuf.FormatError' if not.
-    SNAPSHOT_SCHEMA.check_match(result)
-    
-    return result
-
-
-
-
-
-class TargetsFile(MetaFile):
-  def __init__(self, version, expires, filedict=None, delegations=None):
-    if filedict is None:
-      filedict = {}
-    if delegations is None:
-      delegations = {}
-    self.info = {}
-    self.info['version'] = version
-    self.info['expires'] = expires
-    self.info['targets'] = filedict
-    self.info['delegations'] = delegations
-
-
-  @staticmethod
-  def from_metadata(object):
-    # Is 'object' a Targets metadata file?
-    # Raise tuf.FormatError if not.
-    TARGETS_SCHEMA.check_match(object)
-    
-    version = object['version']
-    expires = object['expires']
-    filedict = object.get('targets')
-    delegations = object.get('delegations')
-    
-    return TargetsFile(version, expires, filedict, delegations)
-
-
-  @staticmethod
-  def make_metadata(version, expiration_date, filedict=None, delegations=None):
-    if filedict is None and delegations is None:
-      raise tuf.Error('We don\'t allow completely empty targets metadata.')
-
-    result = {'_type' : 'Targets'}
-    result['version'] = version
-    result['expires'] = expiration_date
-    result['targets'] = {} 
-    if filedict is not None:
-      result['targets'] = filedict
-    if delegations is not None:
-      result['delegations'] = delegations
-
-    # Is 'result' a Targets metadata file?
-    # Raise 'tuf.FormatError' if not.
-    TARGETS_SCHEMA.check_match(result)
-    
-    return result
-
-
-
-
-
-class MirrorsFile(MetaFile):
-  def __init__(self, version, expires):
-    self.info = {}
-    self.info['version'] = version
-    self.info['expires'] = expires
-
-
-  @staticmethod
-  def from_metadata(object):
-    raise NotImplementedError
-
-
-  @staticmethod
-  def make_metadata():
-    raise NotImplementedError
+  return d
 
 
 
@@ -851,15 +720,6 @@ SCHEMAS_BY_TYPE = {
   'Snapshot' : SNAPSHOT_SCHEMA,
   'Timestamp' : TIMESTAMP_SCHEMA,
   'Mirrors' : MIRRORLIST_SCHEMA}
-
-# A dict holding the recognized class names for the top-level roles.
-# That is, the role classes listed in this module (e.g., class TargetsFile()).
-ROLE_CLASSES_BY_TYPE = {
-  'Root' : RootFile,
-  'Targets' : TargetsFile,
-  'Snapshot' : SnapshotFile,
-  'Timestamp' : TimestampFile,
-  'Mirrors' : MirrorsFile}
 
 
 
@@ -1215,53 +1075,6 @@ def make_role_metadata(keyids, threshold, name=None, paths=None,
   ROLE_SCHEMA.check_match(role_meta)
 
   return role_meta
-
-
-
-
-
-def get_role_class(expected_rolename):
-  """
-  <Purpose>
-    Return the role class corresponding to
-    'expected_rolename'.  The role name returned
-    by expected_meta_rolename() should be the name
-    passed as an argument to this function.  If
-    'expected_rolename' is 'Root', the class
-    RootFile is returned.
-
-  <Arguments>
-    expected_rolename:
-      The role name used to determine which role class
-      to return.
-
-  <Exceptions>
-    tuf.FormatError, if 'expected_rolename' is not a
-    supported role.
-
-  <Side Effects>
-    None.
-
-  <Returns>
-    The class corresponding to 'expected_rolename'.
-    E.g., 'Snapshot' as an argument to this function causes
-    SnapshotFile' to be returned. 
-  """
- 
-  # Does 'expected_rolename' have the correct type?
-  # This check ensures 'expected_rolename' conforms to
-  # 'tuf.formats.NAME_SCHEMA'.
-  # Raise 'tuf.FormatError' if there is a mismatch.
-  NAME_SCHEMA.check_match(expected_rolename)
-  
-  try:
-    role_class = ROLE_CLASSES_BY_TYPE[expected_rolename]
-  
-  except KeyError:
-    raise tuf.FormatError(repr(expected_rolename) + ' not supported.')
-  
-  else:
-    return role_class
 
 
 

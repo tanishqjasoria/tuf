@@ -539,13 +539,18 @@ class TestRoledb(unittest.TestCase):
     version = 8
     consistent_snapshot = False
     expires = '1985-10-21T01:21:00Z'
-    compression_algorithms = ['gz'] 
+    compression_algorithms = ['gz']
 
-    root_metadata = tuf.formats.RootFile.make_metadata(version,
-                                                       expires,
-                                                       keydict, roledict,
-                                                       consistent_snapshot,
-                                                       compression_algorithms)
+    root_metadata = tuf.formats.build_dict_conforming_to_schema(
+        tuf.formats.ROOT_SCHEMA,
+        _type='Root',
+        version=version,
+        expires=expires,
+        keys=keydict,
+        roles=roledict,
+        consistent_snapshot=consistent_snapshot,
+        compression_algorithms=compression_algorithms)
+
     self.assertEqual(None,
                      tuf.roledb.create_roledb_from_root_metadata(root_metadata))
 
@@ -590,11 +595,16 @@ class TestRoledb(unittest.TestCase):
     
     # Generate 'root_metadata' to verify that 'release' and 'root' are added
     # to the role database.
-    root_metadata = tuf.formats.RootFile.make_metadata(version,
-                                                       expires,
-                                                       keydict, roledict,
-                                                       consistent_snapshot,
-                                                       compression_algorithms)
+    root_metadata = tuf.formats.build_dict_conforming_to_schema(
+        tuf.formats.ROOT_SCHEMA,
+        _type='Root',
+        version=version,
+        expires=expires,
+        keys=keydict,
+        roles=roledict,
+        consistent_snapshot=consistent_snapshot,
+        compression_algorithms=compression_algorithms)
+
     self.assertEqual(None,
                      tuf.roledb.create_roledb_from_root_metadata(root_metadata))
 
