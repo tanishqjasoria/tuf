@@ -1375,6 +1375,9 @@ class SingleRepoUpdater(object):
     # is insufficient trusted signatures for the specified metadata.
     # Raise 'tuf.NoWorkingMirrorError' if an update fails.
 
+    # TODO: Rather than this only-try-updating-root-"unsafely"-if-it's-expired
+    #       stuff, just always update root first.  (TAP 5-related change, but
+    #       one that's just correct and in the TUF specification now)
     # Is the Root role expired?  When the top-level roles are initially loaded
     # from disk, their expiration is not checked to allow their updating when
     # requested (and give the updater the chance to continue, rather than always
@@ -1382,10 +1385,9 @@ class SingleRepoUpdater(object):
     # 'unsafely_update_root_if_necessary' is True, update an expired Root role
     # now.  Updating the other top-level roles, regardless of their validity,
     # should only occur if the root of trust is up-to-date.
-    root_metadata = self.metadata['current']['root']
-    try: 
-      self._ensure_not_expired(root_metadata, 'root')
-    
+    try:
+      self._ensure_not_expired(self.metadata['current']['root'], 'root')
+
     except tuf.ExpiredMetadataError:
       # Raise 'tuf.NoWorkingMirrorError' if a valid (not expired, properly
       # signed, and valid metadata) 'root.json' cannot be installed.
@@ -1399,6 +1401,14 @@ class SingleRepoUpdater(object):
       else:
         logger.info('An expired Root metadata was loaded and must be updated.')
         raise
+
+
+    # If after trying to update Root, our currently-trusted Root metadata is
+    # *still* expired, then we must abort.
+    # We must not use expired Root metadata to verify other top-level roles.
+    # Hold out for a non-expired Root.
+    self._ensure_not_expired(self.metadata['current']['root'], 'root')
+
 
     # Ensure that the role and key information of the top-level roles is the
     # latest.  We do this whether or not Root needed to be updated, in order to
@@ -1585,8 +1595,17 @@ class SingleRepoUpdater(object):
       tuf.formats.check_signable_object_format(metadata_signable) # TODO: <~> This needs some way of knowing that it has a piece of DER-signed data so that it can re-encode 'signed' as DER before checking it.
 
     # Is 'metadata_signable' expired?
-    self._ensure_not_expired(metadata_signable['signed'], metadata_role)
-   
+    # Note that if we're dealing with Root, we should not concern ourselves
+    # here with its expiration.  The only time we have to worry about whether
+    # or not Root is expired is when we're about to use it to verify OTHER
+    # top-level roles.  (We always have to be able to root chain, even with
+    # expired root metadata.)
+    # TODO: Make consistent the capitalization of role name throughout the
+    #       code.  (This is handled already in the main TUF fork.  Here in
+    #       Uptane's TUF fork, though, there is inconsistent usage.)
+    if metadata_role not in ['Root', 'root']:
+      self._ensure_not_expired(metadata_signable['signed'], metadata_role)
+
     # We previously verified version numbers in this function, but have since
     # moved version number verification to the functions that retrieve
     # metadata.
@@ -2398,6 +2417,10 @@ class SingleRepoUpdater(object):
         # should check to see if our local version is stale and notify the user
         # if so. This raises tuf.ExpiredMetadataError if the metadata we
         # have is expired. Resolves issue #322.
+        # TODO: Consider whether or not to exclude Root from this check....
+        #       Root expiration only needs to be checked when we're about to
+        #       use the currently-trusted Root version to verify other,
+        #       non-Root roles.)
         self._ensure_not_expired(self.metadata['current'][metadata_role],
                                  metadata_role)
 
@@ -2414,7 +2437,10 @@ class SingleRepoUpdater(object):
       if not self._versioninfo_has_been_updated(uncompressed_metadata_filename,
                                                 expected_versioninfo):
         logger.info(repr(uncompressed_metadata_filename) + ' up-to-date.')
-        
+        # TODO: Consider whether or not to exclude Root from this check....
+        #       Root expiration only needs to be checked when we're about to
+        #       use the currently-trusted Root version to verify other,
+        #       non-Root roles.)
         self._ensure_not_expired(self.metadata['current'][metadata_role],
                                  metadata_role)
         
