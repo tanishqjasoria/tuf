@@ -1439,6 +1439,9 @@ def generate_root_metadata(version, expiration_date, consistent_snapshot,
   # Extract the role, threshold, and keyid information of the top-level roles,
   # which Root stores in its metadata.  The necessary role metadata is generated
   # from this information.
+  # TODO: Post-660, all of this needs to change.  It'll already be in the
+  #       roledb metadata for Root.  We won't be harvesting it from roledb
+  #       metadata in the other roles.
   for rolename in ['root', 'targets', 'snapshot', 'timestamp']:
     
     # If a top-level role is missing from 'tuf.roledb.py', raise an exception.

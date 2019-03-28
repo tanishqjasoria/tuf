@@ -390,6 +390,9 @@ PATH_HASH_PREFIX_SCHEMA = HEX_SCHEMA
 # A list of path hash prefixes.
 PATH_HASH_PREFIXES_SCHEMA = SCHEMA.ListOf(PATH_HASH_PREFIX_SCHEMA)
 
+# THIS SCHEMA is used for a variety of different things, like delegation
+# metadata and the list of keyids and threshold for top-level roles in root
+# metadata.  That's... not good.
 # Role object in {'keyids': [keydids..], 'name': 'ABC', 'threshold': 1,
 # 'paths':[filepaths..]} format.
 ROLE_SCHEMA = SCHEMA.Object(
@@ -967,7 +970,7 @@ def make_versioninfo(version_number):
 
 
 
-
+# TODO: Destroy this function. Use build_dict_conforming_to_schema instead.
 def make_role_metadata(keyids, threshold, name=None, paths=None,
                        path_hash_prefixes=None):
   """
