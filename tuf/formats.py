@@ -636,43 +636,6 @@ class MetaFile(object):
 
 
 
-class TimestampFile(MetaFile):
-  def __init__(self, version, expires, filedict):
-    self.info = {}
-    self.info['version'] = version
-    self.info['expires'] = expires
-    self.info['meta'] = filedict
-
-
-  @staticmethod
-  def from_metadata(object):
-    # Is 'object' a Timestamp metadata file?
-    # Raise tuf.FormatError if not.
-    TIMESTAMP_SCHEMA.check_match(object) 
-
-    version = object['version']
-    expires = object['expires']
-    filedict = object['meta']
-    
-    return TimestampFile(version, expires, filedict)
-    
-    
-  @staticmethod
-  def make_metadata(version, expiration_date, filedict):
-    result = {'_type' : 'Timestamp'}
-    result['version'] = version 
-    result['expires'] = expiration_date
-    result['meta'] = filedict
-
-    # Is 'result' a Timestamp metadata file?
-    # Raise 'tuf.FormatError' if not.
-    TIMESTAMP_SCHEMA.check_match(result)
-
-    return result
-
-
-
-
 def build_dict_conforming_to_schema(schema, **kwargs):
   """
   Given a schema object (for example, TIMESTAMP_SCHEMA from this module) and
