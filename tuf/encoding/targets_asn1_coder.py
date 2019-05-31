@@ -225,12 +225,10 @@ def set_asn_targets(json_signed, targetsMetadata):
         if customkey == 'ecu_serial':
           # ecu_serial field name currently goes from ecu_serial to ecuIdentifier
           custom['ecuIdentifier'] = filemeta['custom'][customkey]
-        # TODO: Include other cases specific to Uptane here (release counter
-        # and hardware identifier.)
-        # elif customkey == 'release_counter':
-        #   pass
-        # elif customkey == 'hardware_identifier':
-        #   pass
+        elif customkey == 'release_counter':
+          custom['releaseCounter'] = filemeta['custom'][customkey]
+        elif customkey == 'hardware_id':
+          custom['hardwareIdentifier'] = filemeta['custom'][customkey]
         else:
           custom[customkey] = filemeta['custom'][customkey] # Will probably break.
 
