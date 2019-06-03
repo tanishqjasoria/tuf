@@ -358,9 +358,20 @@ def set_json_targets(json_signed, targetsMetadata):
     # Optional bit.
     custom = targetAndCustom['custom']
     if custom:
-      json_custom = {
-        'ecu_serial': str(custom['ecuIdentifier'])
-      }
+      json_custom = dict()
+      for customkey in custom:
+        if customkey == 'ecuIdentifier':
+          # ecu_serial field name currently goes from ecu_serial to ecuIdentifier
+          # ecuIdentifier would not be present in the image repo targets metadata
+          # hence, it would raise an exception.
+          try:
+            json_custom['ecu_serial'] = str(custom[customkey])
+          except:
+            pass
+        elif customkey == 'releaseCounter':
+          json_custom['release_counter'] = str(custom[customkey])
+        elif customkey == 'hardwareIdentifier':
+          json_custom['hardware_id'] = str(custom[customkey])
       filemeta['custom'] = json_custom
 
     json_targets[filename] = filemeta
