@@ -362,16 +362,24 @@ def set_json_targets(json_signed, targetsMetadata):
       for customkey in custom:
         if customkey == 'ecuIdentifier':
           # ecu_serial field name currently goes from ecu_serial to ecuIdentifier
-          # ecuIdentifier would not be present in the image repo targets metadata
-          # hence, it would raise an exception.
+          # try to get enteries corresponding to the various keys in custom metedata
+          # and if the enteries are empty, ignore and move forward
+          # When there are no enteries corresponding to a certain key,
+          # pyasn1 raises an exception.
           try:
             json_custom['ecu_serial'] = str(custom[customkey])
           except:
             pass
         elif customkey == 'releaseCounter':
-          json_custom['release_counter'] = str(custom[customkey])
+          try:
+            json_custom['release_counter'] = str(custom[customkey])
+          except:
+            pass
         elif customkey == 'hardwareIdentifier':
-          json_custom['hardware_id'] = str(custom[customkey])
+          try:
+            json_custom['hardware_id'] = str(custom[customkey])
+          except:
+            pass
       filemeta['custom'] = json_custom
 
     json_targets[filename] = filemeta
